@@ -122,26 +122,32 @@ jobs:
           fileName: ashroute-upload-key.jks
           encodedString: ${{ secrets.APP_KEYSTORE_BASE64 }}
 
-      - name: Build signed Play bundle
+      - name: Build signed release artifacts
         if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
         working-directory: AshRoute
         run: |
           ./gradlew licensePlaystoreReleaseReport
           ./gradlew \
+            :app:assemblePlaystoreRelease \
             :app:bundlePlaystoreRelease \
             -Pandroid.injected.signing.store.file=${{ steps.android_keystore.outputs.filePath }} \
             -Pandroid.injected.signing.store.password=${{ secrets.APP_KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
-          jarsigner -verify -strict \
+          APK=$(find app/build/outputs/apk/playstore/release \
+            -type f -name '*universal*.apk' -print -quit)
+          ../scripts/verify-play-apk.sh "$APK"
+          jarsigner -verify \
             app/build/outputs/bundle/playstoreRelease/app-playstore-release.aab
 
-      - name: Upload signed Play bundle
+      - name: Upload signed release artifacts
         if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
         uses: actions/upload-artifact@v7
         with:
           name: AshRoute-playstore-release
-          path: AshRoute/app/build/outputs/bundle/playstoreRelease/*.aab
+          path: |
+            AshRoute/app/build/outputs/bundle/playstoreRelease/*.aab
+            AshRoute/app/build/outputs/apk/playstore/release/*universal*.apk
 
   publish-github-release:
     needs: build
@@ -151,24 +157,23 @@ jobs:
       contents: write
 
     steps:
-      - name: Download signed Play bundle
+      - name: Download signed release artifacts
         uses: actions/download-artifact@v8
         with:
           name: AshRoute-playstore-release
           path: release
 
-      - name: Sign release files
+      - name: Prepare release files
         run: |
-          printf '%s' "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
-          KEY=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')
           mkdir -p release-files
-          find release -type f -name '*.aab' | while read -r bundle; do
-            target="release-files/AshRoute_${{ inputs.release_tag }}.aab"
-            cp "$bundle" "$target"
-            gpg --batch --yes --local-user "$KEY" --detach-sign \
-              --output "$target.sig" "$target"
-          done
-          gpg --armor --export "$KEY" > release-files/AshRoute-public-key.asc
+          AAB=$(find release -type f -name '*.aab' -print -quit)
+          APK=$(find release -type f -name '*universal*.apk' -print -quit)
+          cp "$AAB" "release-files/AshRoute_${{ inputs.release_tag }}.aab"
+          cp "$APK" "release-files/AshRoute_${{ inputs.release_tag }}_universal.apk"
+          (
+            cd release-files
+            sha256sum ./* > SHA256SUMS.txt
+          )
 
       - name: Publish GitHub release assets
         uses: svenstaro/upload-release-action@v2

@@ -31,8 +31,8 @@ bundle before submitting because Play Console wording and policy can change.
 - Enroll in Play App Signing and keep the upload keystore outside the
   repository.
 - Configure GitHub Actions secrets `APP_KEYSTORE_BASE64`,
-  `APP_KEYSTORE_PASSWORD`, `APP_KEYSTORE_ALIAS`, `APP_KEY_PASSWORD`, and
-  `GPG_PRIVATE_KEY` before running a tagged release workflow.
+  `APP_KEYSTORE_PASSWORD`, `APP_KEYSTORE_ALIAS`, and `APP_KEY_PASSWORD`
+  before running a tagged release workflow.
 - Use `https://sites.google.com/view/ashroute` as the privacy-policy URL.
   Re-check anonymous access before every release.
 
@@ -159,7 +159,7 @@ answers before release.
 
 ## Release gates
 
-- Build a signed `playstoreRelease` Android App Bundle.
+- Build a signed `playstoreRelease` Android App Bundle and universal APK.
 - Run unit tests, Playstore lint, and release bundle assembly.
 - Run `scripts/verify-play-apk.sh` against the universal Play APK. This checks
   the package ID, target API, bundled legal notices, native ABIs, and 16 KB
@@ -170,6 +170,10 @@ answers before release.
 - Upload first to an internal testing track.
 - Complete content rating, app content, privacy, and VpnService forms.
 - Resolve every Play pre-launch report issue before production rollout.
+
+The tagged release workflow uploads the AAB, installable universal APK, and
+`SHA256SUMS.txt` to GitHub Releases. Upload the AAB to Google Play; publish the
+APK for direct GitHub downloads.
 
 ## Play Console submission order
 
