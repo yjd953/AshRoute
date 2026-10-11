@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: V2Ray程序问题
+    url: https://github.com/v2fly/v2ray-core/
+    about: 如果问题来自 V2Ray 内核而非 AshRoute 客户端，请到内核仓库讨论。

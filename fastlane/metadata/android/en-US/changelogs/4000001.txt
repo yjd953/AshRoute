@@ -1,0 +1,7 @@
+First AshRoute release.
+
+- Independent app identity, icon, update channel, and privacy policy
+- Open-source Android proxy client based on v2rayNG
+- In-app VPN disclosure before the Android permission prompt
+- Encrypted endpoint enforcement in the Google Play build
+- Per-app routing without broad installed-app visibility permission

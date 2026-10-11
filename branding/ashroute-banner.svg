@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#171615"/>
+  <g transform="translate(90 80) scale(.54)">
+    <path d="M174 798 404 202h110L316 798Z" fill="#F7F3F1"/>
+    <path d="M456 202h108l286 596H690Z" fill="#F7F3F1"/>
+    <rect x="330" y="562" width="380" height="84" fill="#C63C32"/>
+    <circle cx="330" cy="604" r="42" fill="#C63C32"/>
+    <circle cx="710" cy="604" r="42" fill="#C63C32"/>
+    <circle cx="520" cy="604" r="18" fill="#F7F3F1"/>
+  </g>
+  <text x="620" y="405" fill="#F7F3F1" font-family="Arial, sans-serif" font-size="112" font-weight="700">AshRoute</text>
+  <rect x="625" y="448" width="430" height="14" fill="#C63C32"/>
+</svg>

@@ -1,0 +1,179 @@
+name: Build AshRoute
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing tag to publish, for example v1.0.0
+        required: false
+        type: string
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          log-accepted-android-sdk-licenses: false
+          cmdline-tools-version: "14742923"
+          packages: "platforms;android-37.0 build-tools;37.0.0 platform-tools"
+
+      - name: Install NDK
+        run: |
+          echo "y" | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            --channel=0 \
+            --install "ndk;30.0.16248370"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> "$GITHUB_ENV"
+          sed -i '10i\
+          \
+              ndkVersion = "30.0.16248370"' \
+              "$GITHUB_WORKSPACE/AshRoute/app/build.gradle.kts"
+
+      - name: Restore cached libhevtun
+        id: cache-libhevtun-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ github.workspace }}/libs
+          key: libhevtun-${{ runner.os }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD', 'compile-hevtun.sh') }}
+
+      - name: Build libhevtun
+        if: steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
+        run: bash compile-hevtun.sh
+
+      - name: Save libhevtun
+        if: steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ github.workspace }}/libs
+          key: libhevtun-${{ runner.os }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD', 'compile-hevtun.sh') }}
+
+      - name: Copy libhevtun
+        run: cp -R "$GITHUB_WORKSPACE/libs" "$GITHUB_WORKSPACE/AshRoute/app"
+
+      - name: Resolve AndroidLibXrayLite release
+        run: |
+          pushd AndroidLibXrayLite
+          CURRENT_TAG=$(git describe --tags --abbrev=0)
+          echo "CURRENT_TAG=$CURRENT_TAG" >> "$GITHUB_ENV"
+          popd
+
+      - name: Download libv2ray
+        uses: robinraju/release-downloader@v1.13
+        with:
+          repository: 2dust/AndroidLibXrayLite
+          tag: ${{ env.CURRENT_TAG }}
+          fileName: libv2ray.aar
+          out-file-path: AshRoute/app/libs/
+
+      - name: Setup Java
+        uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Verify Play build
+        working-directory: AshRoute
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          chmod 755 gradlew
+          ./gradlew \
+            :app:testPlaystoreDebugUnitTest \
+            :app:compilePlaystoreDebugKotlin \
+            :app:lintPlaystoreRelease \
+            :app:assemblePlaystoreDebug
+
+      - name: Verify Play APK contents
+        env:
+          BUILD_TOOLS_VERSION: "37.0.0"
+        run: |
+          APK=$(find AshRoute/app/build/outputs/apk/playstore/debug \
+            -type f -name '*universal*.apk' -print -quit)
+          scripts/verify-play-apk.sh "$APK"
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: AshRoute-playstore-debug
+          path: AshRoute/app/build/outputs/apk/playstore/debug/*universal*.apk
+
+      - name: Decode Android signing key
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+        uses: timheuer/base64-to-file@v2.0.0
+        id: android_keystore
+        with:
+          fileName: ashroute-upload-key.jks
+          encodedString: ${{ secrets.APP_KEYSTORE_BASE64 }}
+
+      - name: Build signed Play bundle
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+        working-directory: AshRoute
+        run: |
+          ./gradlew licensePlaystoreReleaseReport
+          ./gradlew \
+            :app:bundlePlaystoreRelease \
+            -Pandroid.injected.signing.store.file=${{ steps.android_keystore.outputs.filePath }} \
+            -Pandroid.injected.signing.store.password=${{ secrets.APP_KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
+          jarsigner -verify -strict \
+            app/build/outputs/bundle/playstoreRelease/app-playstore-release.aab
+
+      - name: Upload signed Play bundle
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: AshRoute-playstore-release
+          path: AshRoute/app/build/outputs/bundle/playstoreRelease/*.aab
+
+  publish-github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download signed Play bundle
+        uses: actions/download-artifact@v8
+        with:
+          name: AshRoute-playstore-release
+          path: release
+
+      - name: Sign release files
+        run: |
+          printf '%s' "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+          KEY=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')
+          mkdir -p release-files
+          find release -type f -name '*.aab' | while read -r bundle; do
+            target="release-files/AshRoute_${{ inputs.release_tag }}.aab"
+            cp "$bundle" "$target"
+            gpg --batch --yes --local-user "$KEY" --detach-sign \
+              --output "$target.sig" "$target"
+          done
+          gpg --armor --export "$KEY" > release-files/AshRoute-public-key.asc
+
+      - name: Publish GitHub release assets
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: release-files/*
+          tag: ${{ inputs.release_tag }}
+          file_glob: true
+          prerelease: true

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <rect width="1024" height="500" fill="#F4F2EF"/>
+  <path d="M0 430H1024V500H0Z" fill="#171615"/>
+  <path d="M105 338 205 94h48l-86 244Z" fill="#171615"/>
+  <path d="M228 94h47l120 244h-70Z" fill="#171615"/>
+  <rect x="171" y="241" width="160" height="36" fill="#C63C32"/>
+  <circle cx="171" cy="259" r="18" fill="#C63C32"/>
+  <circle cx="331" cy="259" r="18" fill="#C63C32"/>
+  <circle cx="251" cy="259" r="8" fill="#F4F2EF"/>
+  <path d="M415 288H512L558 242H646L696 192H891" fill="none" stroke="#C63C32" stroke-width="10"/>
+  <circle cx="415" cy="288" r="14" fill="#171615"/>
+  <circle cx="558" cy="242" r="14" fill="#171615"/>
+  <circle cx="696" cy="192" r="14" fill="#171615"/>
+  <circle cx="891" cy="192" r="14" fill="#171615"/>
+  <text x="415" y="142" fill="#171615" font-family="Arial, sans-serif" font-size="76" font-weight="700">AshRoute</text>
+  <text x="418" y="350" fill="#4C4946" font-family="Arial, sans-serif" font-size="25">User-controlled encrypted routing</text>
+  <rect x="418" y="373" width="118" height="8" fill="#C63C32"/>
+</svg>

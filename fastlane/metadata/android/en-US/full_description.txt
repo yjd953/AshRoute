@@ -1,0 +1,23 @@
+<p>AshRoute is an open-source Android proxy client powered by Xray-core. It connects only to servers and subscriptions that you choose and configure. AshRoute does not provide, sell, or operate VPN servers.</p>
+
+<h3>Core features</h3>
+<ul>
+<li>Import configurations from links, files, the clipboard, or QR codes</li>
+<li>Route the whole device or selected apps through a configured endpoint</li>
+<li>Manage multiple profiles, subscriptions, routing rules, and DNS options</li>
+<li>Run local connection tests and export selected configurations</li>
+<li>No ads, analytics, account system, or developer-operated backend</li>
+</ul>
+
+<h3>VPN service use</h3>
+<p>When VPN mode is enabled, AshRoute uses Android's VpnService solely to create a local device-level tunnel and route selected traffic to the endpoint you configured. Traffic is not redirected for advertising or monetization. AshRoute does not retain traffic content or send it to the AshRoute maintainer.</p>
+
+<h3>Per-app routing</h3>
+<p>Per-app routing is a core AshRoute feature. AshRoute lists only the launchable apps Android makes visible without broad package access. This information is processed locally so you can choose which apps use the tunnel. It is not sent to the AshRoute maintainer or used for advertising or profiling.</p>
+
+<h3>Important</h3>
+<p>You are responsible for choosing a trustworthy endpoint, using secure encryption, and complying with applicable rules. The endpoint operator and destination services may process network traffic under their own policies.</p>
+
+<p>Privacy policy: <a href="https://sites.google.com/view/ashroute">sites.google.com/view/ashroute</a></p>
+
+<p>AshRoute is an independent modified version of <a href="https://github.com/2dust/v2rayNG">v2rayNG</a>, distributed under GPL-3.0. It is not affiliated with or endorsed by the upstream maintainers.</p>

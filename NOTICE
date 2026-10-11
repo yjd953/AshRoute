@@ -1,0 +1,19 @@
+AshRoute
+Copyright (c) 2026 AshRoute contributors
+
+AshRoute is an independent modified version of v2rayNG:
+https://github.com/2dust/v2rayNG
+
+The upstream project is maintained by 2dust and its contributors. Copyright
+in upstream code remains with its respective copyright holders. AshRoute is
+not affiliated with, sponsored by, or endorsed by the upstream maintainers.
+
+AshRoute modifications began on October 10, 2026 and include independent
+branding, package identity, distribution metadata, privacy disclosures, and
+user-interface changes.
+
+The combined work is distributed under the GNU General Public License,
+version 3. A copy of that license is included in LICENSE. Third-party
+components retain their respective licenses and notices. Component revisions,
+source locations, and bundled license files are listed in
+THIRD_PARTY_NOTICES.md.
